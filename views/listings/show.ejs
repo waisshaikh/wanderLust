@@ -1,0 +1,110 @@
+<% layout('/layouts/boilerplate.ejs') %>
+
+<script>
+     const mapToken = "<%=process.env.MAP_TOKEN  %>";
+     const listing = <%- JSON.stringify(listing)  %>;
+     
+</script>
+
+
+<div class="card custom-listing-card border-0">
+    <div class="row g-0">
+        <div class="col-md-6">
+            <img src="<%= listing.image?.url || '/images/default.jpg' %>" class="img-fluid" alt="Listing Image">
+        </div>
+        <div class="col-md-6 p-4">
+            <h2 class="mb-3"><%= listing.title %></h2>
+            <p><strong>Owner:</strong> <%= listing.owner?.username %></p>
+            <p><%= listing.description %></p>
+            <p><strong>₹ <%= listing.price %></strong></p>
+            <p><%= listing.location %>, <%= listing.country %></p>
+
+            <% if (currUser && listing.owner._id.equals(currUser._id)) { %>
+                <a href="/listings/<%= listing._id %>/edit" class="btn btn-primary me-2 mb-2">Edit</a>
+                <form method="POST" action="/listings/<%= listing._id %>?_method=DELETE" class="d-inline">
+                    <button class="btn btn-danger mb-2">Delete</button>
+                </form>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- Review Form Section -->
+<!-- Review Form Section -->
+<div class="container my-5">
+    <% if (currUser) { %>
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card p-4 shadow-sm border-0 rounded-4">
+                    <h4 class="mb-3 fw-semibold text-center">Leave a Review</h4>
+                    <form action="/listings/<%= listing._id %>/reviews" method="POST">                       
+                         <!-- Star Rating -->
+                        <div class="mb-3 text-center">
+                            <div class="star-rating">
+                                <% for (let i = 5; i >= 1; i--) { %>
+                                    <input type="radio" name="review[rating]" id="star<%= i %>" value="<%= i %>" 
+                                        <%= i === 1 ? 'checked' : '' %> required>
+                                    <label for="star<%= i %>">★</label>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <!-- Comment Box -->
+                        <div class="mb-3">
+                            <label for="comment" class="form-label">Comment</label>
+                            <textarea name="review[comment]" id="comment" rows="4" class="form-control" required></textarea>
+                            <div class="invalid-feedback">Please provide a comment.</div>
+                        </div>
+
+                        <div class="text-center">
+                            <button class="btn btn-dark px-4">Submit Review</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    <% } %>
+</div>
+
+
+<!-- Display Reviews -->
+<div class="container my-5">
+    <h3 class="mb-4 text-center">User Reviews</h3>
+    <% if (listing.reviews.length > 0) { %>
+        <div class="row g-4">
+            <% listing.reviews.forEach(review => { %>
+                <div class="col-md-6">
+                    <div class="card review-card p-3 shadow-sm border-0 rounded-4 h-100">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="avatar rounded-circle bg-secondary text-white d-flex justify-content-center align-items-center me-3" style="width:40px; height:40px;">
+                                <%= review.author?.username?.charAt(0).toUpperCase() || 'U' %>
+                            </div>
+                            <div>
+                                <h6 class="mb-0"><%= review.author?.username || 'Anonymous' %></h6>
+                                <small class="text-warning"><%= '★'.repeat(review.rating) %></small>
+                            </div>
+                        </div>
+                        <p class="text-muted mb-2"><%= review.comment %></p>
+                        <% if (currUser && review.author && review.author._id.equals(currUser._id)) { %>
+                            <div class="text-end">
+                                <form method="POST" action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE" class="d-inline">
+                                    <button class="btn btn-sm btn-outline-danger">Delete</button>
+                                </form>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+    <% } else { %>
+        <p class="text-muted text-center">No reviews yet. Be the first to leave one!</p>
+    <% } %>
+
+    <!-- Map Section -->
+    <div class="col-12 mt-5">
+        <h1 class="mb-3 text-center">Where You'll be</h1>
+        <div id="map" style="height: 400px;"></div>
+    </div>
+</div>
+
+<script src="/javascript/map.js"></script>
